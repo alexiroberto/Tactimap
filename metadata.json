@@ -1,0 +1,5 @@
+{
+  "name": "tactimap deploy",
+  "description": "A tactical command and control interface for establishing security zones on a map using Google Maps.",
+  "requestFramePermissions": []
+}
