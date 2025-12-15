@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useCallback, useEffect, useState } from 'react';
 import { GoogleMap, Circle, Marker, Polygon, Polyline, OverlayView } from '@react-google-maps/api';
-import { DEFAULT_CENTER, DARK_MAP_STYLE, GREEN_PIN_ICON, AMBULANCE_ICON, RED_PIN_ICON, ASSEMBLY_ICON, DECON_ICON, COMMAND_ICON } from '../constants';
+import { DEFAULT_CENTER, DARK_MAP_STYLE, GREEN_PIN_ICON, BP_ICON, RED_PIN_ICON, ASSEMBLY_ICON, DECON_ICON, COMMAND_ICON, LEDNINGSPLATS_ICON, SPS_ICON, SEKTOR_ICON, MOB_ICON } from '../constants';
 import { Zone, SearchLocation, MapType, MapCenter, TacticalMarker, RoadPath, ToolType } from '../types';
 
 interface SecurityMapProps {
@@ -26,6 +26,10 @@ interface SecurityMapProps {
   previewBearing: number;
   previewHasWarmZone?: boolean; // New prop to preview warm zone
   activeTool?: ToolType;
+  
+  // Drift props
+  windDirection?: number;
+  windSpeed?: number;
 }
 
 const containerStyle = {
@@ -345,9 +349,119 @@ const ZoneItem: React.FC<{
   );
 };
 
+// --- COMPONENT FOR CALCULATING AND RENDERING MOB DRIFT ---
+const MOBDriftVisualizer: React.FC<{
+  marker: TacticalMarker;
+  windDirection: number;
+  windSpeed: number;
+}> = ({ marker, windDirection, windSpeed }) => {
+  const [driftPath, setDriftPath] = useState<Array<{ lat: number, lng: number }>>([]);
+  const [currentDriftPos, setCurrentDriftPos] = useState<{ lat: number, lng: number } | null>(null);
+  const [searchRadius, setSearchRadius] = useState(0);
+  
+  // Re-calculate drift every few seconds or when props change
+  useEffect(() => {
+    if (!marker.createdAt) return;
+
+    const interval = setInterval(() => {
+        const now = Date.now();
+        const elapsedSeconds = (now - marker.createdAt!) / 1000;
+        
+        // --- DRIFT PHYSICS (SIMPLIFIED) ---
+        // Leeway is typically 3% of wind speed for a person in water.
+        // If windSpeed is 0 or undefined, assume a minimal drift (e.g., 0.5 m/s current) or 0.
+        // We convert m/s drift to distance.
+        
+        let driftSpeedMetersPerSecond = 0;
+        
+        if (windSpeed && windSpeed > 0) {
+            driftSpeedMetersPerSecond = windSpeed * 0.03; // 3% rule
+        } else {
+            driftSpeedMetersPerSecond = 0.2; // minimal drift if no wind known
+        }
+
+        const totalDriftDistance = driftSpeedMetersPerSecond * elapsedSeconds;
+        
+        // Direction: Wind comes FROM, Drift goes TO. So WindDir + 180.
+        // If no wind dir, assume 0 or handle gracefullly.
+        const driftBearing = (windDirection + 180) % 360;
+
+        const startPoint = { lat: marker.lat, lng: marker.lng };
+        const endPoint = getDestinationPoint(startPoint, totalDriftDistance, driftBearing);
+        
+        setDriftPath([startPoint, endPoint]);
+        setCurrentDriftPos(endPoint);
+
+        // Search Radius grows with time (uncertainty)
+        // E.g., grows by 0.1m every second + base 10m
+        setSearchRadius(10 + (elapsedSeconds * 0.1));
+
+    }, 1000); // Update every second for smooth visual
+
+    return () => clearInterval(interval);
+  }, [marker, windDirection, windSpeed]);
+
+  if (!currentDriftPos) return null;
+
+  return (
+    <>
+       {/* Drift Line (Vector) */}
+       <Polyline 
+         path={driftPath}
+         options={{
+            strokeColor: '#ef4444',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2 }, offset: '0', repeat: '10px' }] // Dashed
+         }}
+       />
+       
+       {/* Estimated Position Circle */}
+       <Circle 
+         center={currentDriftPos}
+         radius={searchRadius}
+         options={{
+            fillColor: '#ef4444',
+            fillOpacity: 0.1,
+            strokeColor: '#ef4444',
+            strokeOpacity: 0.5,
+            strokeWeight: 1,
+            clickable: false
+         }}
+       />
+       
+       {/* X marks the spot */}
+        <Marker
+            position={currentDriftPos}
+            icon={{
+                path: (window as any).google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                scale: 3,
+                strokeColor: '#ef4444',
+                fillColor: '#ef4444',
+                fillOpacity: 1,
+                rotation: (windDirection + 180) % 360
+            }}
+            zIndex={90}
+        />
+        
+       {/* Info Label Overlay */}
+        <OverlayView
+              position={currentDriftPos}
+              mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+        >
+            <div className="absolute left-4 top-0 bg-black/60 backdrop-blur text-white text-[9px] px-2 py-1 rounded whitespace-nowrap border border-red-500/30">
+                Drift: {Math.round(searchRadius)}m radie
+            </div>
+        </OverlayView>
+    </>
+  );
+};
+
+
 const SecurityMap: React.FC<SecurityMapProps> = ({ 
   zones, markers, roadPaths, onMapClick, onMapRightClick, isPlacingMode, mapType, showZones, onZoneDelete, onMarkerDelete, onZoneUpdate, searchLocation, onLoad, onCenterChanged, 
-  previewRadius, previewInnerRadius, previewType, previewBearing, previewHasWarmZone, activeTool 
+  previewRadius, previewInnerRadius, previewType, previewBearing, previewHasWarmZone, activeTool,
+  windDirection = 0, windSpeed = 0 
 }) => {
   const mapRef = useRef<any>(null);
   const ghostCircleRef = useRef<any>(null);
@@ -356,6 +470,9 @@ const SecurityMap: React.FC<SecurityMapProps> = ({
   const ghostInnerRef = useRef<any>(null);
   const lastMousePosRef = useRef<any>(null);
   const pulseFrameRef = useRef<number>(0);
+  
+  // State for selected marker (to show delete popup)
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
 
   const handleMapLoad = useCallback((map: any) => { mapRef.current = map; onLoad(map); }, [onLoad]);
 
@@ -471,6 +588,7 @@ const SecurityMap: React.FC<SecurityMapProps> = ({
     clickableIcons: false,
     draggableCursor: isPlacingMode ? 'crosshair' : 'grab',
     mapTypeId: mapType,
+    gestureHandling: 'greedy',
   }), [isPlacingMode, mapType]);
 
   const searchMarkerIcon = useMemo(() => {
@@ -487,9 +605,9 @@ const SecurityMap: React.FC<SecurityMapProps> = ({
     return undefined;
   }, []);
 
-  const ambulanceIcon = useMemo(() => {
+  const bpIcon = useMemo(() => {
     if (typeof window !== 'undefined' && (window as any).google) {
-      return { ...AMBULANCE_ICON, scaledSize: new (window as any).google.maps.Size(60, 30), anchor: new (window as any).google.maps.Point(30, 15) };
+      return { ...BP_ICON, scaledSize: new (window as any).google.maps.Size(36, 30), anchor: new (window as any).google.maps.Point(18, 15) };
     }
     return undefined;
   }, []);
@@ -510,7 +628,35 @@ const SecurityMap: React.FC<SecurityMapProps> = ({
 
   const commandIcon = useMemo(() => {
     if (typeof window !== 'undefined' && (window as any).google) {
-      return { ...COMMAND_ICON, scaledSize: new (window as any).google.maps.Size(30, 30), anchor: new (window as any).google.maps.Point(15, 15) };
+      return { ...COMMAND_ICON, scaledSize: new (window as any).google.maps.Size(36, 30), anchor: new (window as any).google.maps.Point(18, 15) };
+    }
+    return undefined;
+  }, []);
+
+  const ledningsplatsIcon = useMemo(() => {
+    if (typeof window !== 'undefined' && (window as any).google) {
+      return { ...LEDNINGSPLATS_ICON, scaledSize: new (window as any).google.maps.Size(36, 30), anchor: new (window as any).google.maps.Point(18, 15) };
+    }
+    return undefined;
+  }, []);
+
+  const spsIcon = useMemo(() => {
+    if (typeof window !== 'undefined' && (window as any).google) {
+      return { ...SPS_ICON, scaledSize: new (window as any).google.maps.Size(36, 30), anchor: new (window as any).google.maps.Point(18, 15) };
+    }
+    return undefined;
+  }, []);
+
+  const sektorIcon = useMemo(() => {
+    if (typeof window !== 'undefined' && (window as any).google) {
+      return { ...SEKTOR_ICON, scaledSize: new (window as any).google.maps.Size(30, 30), anchor: new (window as any).google.maps.Point(15, 15) };
+    }
+    return undefined;
+  }, []);
+
+  const mobIcon = useMemo(() => {
+     if (typeof window !== 'undefined' && (window as any).google) {
+      return { ...MOB_ICON, scaledSize: new (window as any).google.maps.Size(36, 36), anchor: new (window as any).google.maps.Point(18, 18) };
     }
     return undefined;
   }, []);
@@ -520,19 +666,36 @@ const SecurityMap: React.FC<SecurityMapProps> = ({
         case 'assembly': return assemblyIcon;
         case 'decon': return deconIcon;
         case 'command': return commandIcon;
-        case 'breakpoint': return ambulanceIcon;
+        case 'breakpoint': return bpIcon;
+        case 'ledningsplats': return ledningsplatsIcon;
+        case 'sps': return spsIcon;
+        case 'sektor': return sektorIcon;
+        case 'mob': return mobIcon;
         default: return greenPinIcon;
     }
   };
 
   const getMarkerColor = (type: string) => {
       switch (type) {
-          case 'breakpoint': return 'text-red-500'; // Ambulance/Red
+          case 'breakpoint': return 'text-red-500'; // BP/Red
           case 'assembly': return 'text-red-500'; // Medical/Red
           case 'decon': return 'text-purple-500'; // Decon/Purple
           case 'command': return 'text-emerald-500'; // Command/Green
+          case 'ledningsplats': return 'text-red-600'; // Command Post/Red
+          case 'sps': return 'text-yellow-500'; // SPS/Yellow
+          case 'sektor': return 'text-slate-400'; // Sector/Grey
+          case 'mob': return 'text-red-600'; // MOB/Red
           default: return 'text-white';
       }
+  };
+
+  // Wrapper for parent map click to clear selection first
+  const handleMapBackgroundClick = (e: any) => {
+    if (selectedMarkerId) {
+      setSelectedMarkerId(null);
+    } else {
+      onMapClick(e);
+    }
   };
 
   return (
@@ -542,7 +705,7 @@ const SecurityMap: React.FC<SecurityMapProps> = ({
       zoom={13}
       onLoad={handleMapLoad}
       options={mapOptions}
-      onClick={onMapClick}
+      onClick={handleMapBackgroundClick}
       onRightClick={onMapRightClick}
       onIdle={handleIdle}
     >
@@ -575,14 +738,70 @@ const SecurityMap: React.FC<SecurityMapProps> = ({
       
       {/* RENDER TACTICAL MARKERS WITH PULSE (using OverlayView) */}
       {markers.map((marker) => {
+          // If this is a MOB marker, render its drift visualization
+          if (marker.type === 'mob') {
+              return (
+                  <React.Fragment key={marker.id}>
+                    <MOBDriftVisualizer 
+                        marker={marker} 
+                        windDirection={windDirection}
+                        windSpeed={windSpeed}
+                    />
+                    
+                    {/* Render standard marker overlay too (below) */}
+                    <OverlayView
+                        position={{ lat: marker.lat, lng: marker.lng }}
+                        mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                        <div 
+                            className="relative flex items-center justify-center cursor-pointer group w-10 h-10"
+                            style={{ transform: 'translate(-50%, -50%)', zIndex: selectedMarkerId === marker.id ? 5000 : 100 }}
+                            onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onMarkerDelete(marker.id); }}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedMarkerId(selectedMarkerId === marker.id ? null : marker.id); }}
+                        >
+                            {selectedMarkerId === marker.id && (
+                                <div 
+                                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-32 bg-slate-900/95 backdrop-blur-md border border-white/20 rounded-lg p-2 shadow-2xl flex flex-col items-center gap-2 animate-fade-in origin-bottom cursor-default"
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onTouchStart={(e) => e.stopPropagation()}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                >
+                                <span className="text-[10px] font-bold text-white truncate max-w-full leading-tight">{marker.label || "MOB"}</span>
+                                <button 
+                                    type="button" 
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedMarkerId(null); onMarkerDelete(marker.id); }} 
+                                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedMarkerId(null); onMarkerDelete(marker.id); }}
+                                    className="bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-4 py-2 rounded w-full uppercase shadow-lg pointer-events-auto"
+                                >
+                                    AVSLUTA
+                                </button>
+                                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-r border-b border-white/20 rotate-45"></div>
+                                </div>
+                            )}
+                            <div className="absolute inset-0 rounded-full text-red-600 animate-tactical-pulse opacity-80"></div>
+                            {selectedMarkerId === marker.id && <div className="absolute -inset-2 border-2 border-white/50 rounded-full animate-ping opacity-30"></div>}
+                            <img src={mobIcon?.url} alt="MOB" className={`relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transform transition-transform duration-200 ${selectedMarkerId === marker.id ? 'scale-110' : 'hover:scale-110'} w-8 h-8`} />
+                        </div>
+                    </OverlayView>
+                  </React.Fragment>
+              );
+          }
+
+          // STANDARD MARKER LOGIC
           const iconObj = getMarkerIcon(marker.type);
           const iconUrl = iconObj?.url || '';
           const pulseColor = getMarkerColor(marker.type);
+          const isSelected = selectedMarkerId === marker.id;
 
-          // Dynamic styling for ambulance which is wider
-          const isWide = marker.type === 'breakpoint';
-          const containerClass = isWide ? "w-16 h-10" : "w-10 h-10";
-          const imgClass = isWide ? "w-full h-full object-contain" : "w-8 h-8";
+          const isBP = marker.type === 'breakpoint';
+          const isSPS = marker.type === 'sps';
+          const isCommand = marker.type === 'command';
+          const isLedning = marker.type === 'ledningsplats';
+          
+          const containerClass = (isBP || isSPS || isCommand || isLedning) ? "w-12 h-10" : "w-10 h-10";
+          const imgClass = (isBP || isSPS || isCommand || isLedning) ? "w-full h-full object-contain" : "w-8 h-8";
+          const zIndex = isSelected ? 5000 : 100;
 
           return (
             <OverlayView
@@ -590,26 +809,36 @@ const SecurityMap: React.FC<SecurityMapProps> = ({
               position={{ lat: marker.lat, lng: marker.lng }}
               mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
             >
-              {/* Center the bottom-center of the icon to the coordinate */}
               <div 
                   className={`relative flex items-center justify-center cursor-pointer group ${containerClass}`}
-                  style={{ transform: 'translate(-50%, -100%)' }}
-                  onContextMenu={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onMarkerDelete(marker.id);
-                  }}
-                  title={marker.label} // Tooltip still shows label on hover
+                  style={{ transform: 'translate(-50%, -100%)', zIndex: zIndex }}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onMarkerDelete(marker.id); }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedMarkerId(isSelected ? null : marker.id); }}
+                  title={marker.label}
               >
-                  {/* The Pulse Effect */}
-                  <div className={`absolute inset-0 ${isWide ? 'rounded-xl' : 'rounded-full'} ${pulseColor} animate-tactical-pulse opacity-80`}></div>
-                  
-                  {/* The Icon */}
-                  <img 
-                      src={iconUrl} 
-                      alt={marker.type} 
-                      className={`relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transform transition-transform duration-200 hover:scale-110 ${imgClass}`} 
-                  />
+                  {isSelected && (
+                    <div 
+                        className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-32 bg-slate-900/95 backdrop-blur-md border border-white/20 rounded-lg p-2 shadow-2xl flex flex-col items-center gap-2 animate-fade-in origin-bottom cursor-default"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <span className="text-[10px] font-bold text-white truncate max-w-full leading-tight">{marker.label || "Plats"}</span>
+                      <button 
+                        type="button" 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedMarkerId(null); onMarkerDelete(marker.id); }}
+                        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedMarkerId(null); onMarkerDelete(marker.id); }}
+                        className="bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-4 py-2 rounded w-full uppercase shadow-lg pointer-events-auto"
+                      >
+                        TA BORT
+                      </button>
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-r border-b border-white/20 rotate-45"></div>
+                    </div>
+                  )}
+                  <div className={`absolute inset-0 ${(isBP || isSPS || isCommand || isLedning) ? 'rounded-xl' : 'rounded-full'} ${pulseColor} animate-tactical-pulse opacity-80`}></div>
+                  {isSelected && <div className={`absolute -inset-2 border-2 border-white/50 rounded-full animate-ping opacity-30`}></div>}
+                  <img src={iconUrl} alt={marker.type} className={`relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transform transition-transform duration-200 ${isSelected ? 'scale-110' : 'hover:scale-110'} ${imgClass}`} />
               </div>
             </OverlayView>
           );

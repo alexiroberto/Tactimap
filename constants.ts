@@ -1,5 +1,7 @@
 
 
+
+
 // Stockholm default center
 export const DEFAULT_CENTER = {
   lat: 59.3293,
@@ -32,72 +34,36 @@ export const RED_PIN_ICON = {
   labelOrigin: { x: 15, y: -10 }
 };
 
-// Ambulance Icon for breakpoints (Brytpunkt) - Updated to Yellow/Green Battenburg Style
-export const AMBULANCE_ICON = {
+// MOB Icon (Man Overboard) - Lifebuoy
+export const MOB_ICON = {
   url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="60" height="30">
-      <defs>
-        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.5"/>
-        </filter>
-      </defs>
-      <g filter="url(#shadow)">
-        <!-- Wheels -->
-        <circle cx="50" cy="100" r="16" fill="#1a1a1a" stroke="#333" stroke-width="2"/>
-        <circle cx="50" cy="100" r="6" fill="#ccc"/>
-        <circle cx="190" cy="100" r="16" fill="#1a1a1a" stroke="#333" stroke-width="2"/>
-        <circle cx="190" cy="100" r="6" fill="#ccc"/>
-        
-        <!-- Body Shape -->
-        <path d="M10,100 L10,50 L60,10 L230,10 L230,100 Z" fill="#FFEB3B" stroke="#D4AF37" stroke-width="1"/>
-        
-        <!-- Cabin Windows -->
-        <path d="M65,15 L110,15 L110,50 L62,50 Z" fill="#2c3e50"/>
-        <path d="M120,15 L160,15 L160,50 L120,50 Z" fill="#BDC3C7" stroke="#999" stroke-width="1"/> <!-- Side shutter -->
-        
-        <!-- Front Window/Windshield -->
-        <path d="M12,50 L58,12 L60,50 Z" fill="#aed6f1" opacity="0.6"/>
-
-        <!-- Battenburg Markings (Green/Yellow) -->
-        <g transform="translate(0, 65)">
-             <rect x="10" y="0" width="220" height="20" fill="#FFEB3B"/>
-             <!-- Top Row -->
-             <rect x="10" y="0" width="20" height="10" fill="#009000"/>
-             <rect x="50" y="0" width="20" height="10" fill="#009000"/>
-             <rect x="90" y="0" width="20" height="10" fill="#009000"/>
-             <rect x="130" y="0" width="20" height="10" fill="#009000"/>
-             <rect x="170" y="0" width="20" height="10" fill="#009000"/>
-             <rect x="210" y="0" width="20" height="10" fill="#009000"/>
-             
-             <!-- Bottom Row (Offset) -->
-             <rect x="30" y="10" width="20" height="10" fill="#009000"/>
-             <rect x="70" y="10" width="20" height="10" fill="#009000"/>
-             <rect x="110" y="10" width="20" height="10" fill="#009000"/>
-             <rect x="150" y="10" width="20" height="10" fill="#009000"/>
-             <rect x="190" y="10" width="20" height="10" fill="#009000"/>
-        </g>
-
-        <!-- Star of Life -->
-        <text x="195" y="45" font-family="Arial" font-size="24" fill="#0055FF" text-anchor="middle" font-weight="bold">*</text>
-        
-        <!-- Text -->
-        <text x="140" y="60" font-family="Arial" font-size="12" fill="#009000" font-weight="bold" text-anchor="middle">AMBULANCE</text>
-        <text x="35" y="85" font-family="Arial" font-size="10" fill="#009000" font-weight="bold">112</text>
-        <text x="35" y="75" font-family="Arial" font-size="8" fill="#009000" font-weight="bold">ALARM</text>
-
-        <!-- Blue Lights -->
-        <rect x="70" y="2" width="20" height="8" fill="#0055ff" rx="2">
-           <animate attributeName="opacity" values="1;0.5;1" dur="0.5s" repeatCount="indefinite" />
-        </rect>
-        <rect x="180" y="2" width="20" height="8" fill="#0055ff" rx="2">
-            <animate attributeName="opacity" values="0.5;1;0.5" dur="0.5s" repeatCount="indefinite" />
-        </rect>
-      </g>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="36" height="36">
+      <path fill="#ef4444" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm0-352a96 96 0 1 1 0 192 96 96 0 1 1 0-192z"/>
+      <path fill="#ffffff" d="M256 104c-83.9 0-152 68.1-152 152s68.1 152 152 152 152-68.1 152-152-68.1-152-152-152zm0 224c-39.8 0-72-32.2-72-72s32.2-72 72-72 72 32.2 72 72-32.2 72-72 72z"/>
+      <path fill="#ffffff" d="M78.6 145.4l56.6 56.6c-18 15.6-30.8 37.9-35.1 63H20.2c6.2-46.6 27.2-88 58.4-119.6zm288 0c31.2 31.6 52.2 73 58.4 119.6h-80c-4.3-25.1-17.1-47.4-35.1-63l56.6-56.6zM135.2 310c4.3 25.1 17.1 47.4 35.1 63L113.8 429.6c-31.2-31.6-52.2-73-58.4-119.6h80zm241.6 0h80c-6.2 46.6-27.2 88-58.4 119.6l-56.6-56.6c18-15.6 30.8-37.9 35.1-63z"/>
     </svg>
   `)}`,
-  scaledSize: { width: 60, height: 30 },
-  anchor: { x: 30, y: 15 },
-  labelOrigin: { x: 30, y: -10 }
+  scaledSize: { width: 36, height: 36 },
+  anchor: { x: 18, y: 18 }, // Center
+  labelOrigin: { x: 18, y: -10 }
+};
+
+// BP Icon (Brytpunkt) - Red Box with "BP" text
+export const BP_ICON = {
+  url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" width="36" height="30">
+      <defs>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="1" dy="1" stdDeviation="1" flood-color="#000" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <rect x="5" y="10" width="110" height="80" rx="4" fill="#ef4444" stroke="#ffffff" stroke-width="4" filter="url(#shadow)" />
+      <text x="60" y="65" font-family="Arial, sans-serif" font-size="45" font-weight="900" fill="#ffffff" text-anchor="middle">BP</text>
+    </svg>
+  `)}`,
+  scaledSize: { width: 36, height: 30 },
+  anchor: { x: 18, y: 15 },
+  labelOrigin: { x: 18, y: -10 }
 };
 
 // Assembly Point Icon (Uppsamlingsplats) - Changed to RED MEDICAL CROSS
@@ -126,25 +92,78 @@ export const DECON_ICON = {
   labelOrigin: { x: 15, y: -10 }
 };
 
-// Command Icon (FRS/Ledningsplats) - Changed to Green Box with Red Cross
+// Command Icon (FRS) - Green Box with "FRS" text
 export const COMMAND_ICON = {
   url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="30" height="30">
-       <defs>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" width="36" height="30">
+      <defs>
         <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
           <feDropShadow dx="1" dy="1" stdDeviation="1" flood-color="#000" flood-opacity="0.3"/>
         </filter>
       </defs>
-      <!-- Green Box -->
-      <rect x="5" y="10" width="90" height="80" rx="10" fill="#10b981" stroke="#047857" stroke-width="4" filter="url(#shadow)" />
-      <!-- Red Cross -->
-      <path fill="#ef4444" d="M42 30h16v14h14v16H58v14H42V60H28V44h14V30z" stroke="#991b1b" stroke-width="1" />
+      <rect x="5" y="10" width="110" height="80" rx="4" fill="#10b981" stroke="#ffffff" stroke-width="4" filter="url(#shadow)" />
+      <text x="60" y="65" font-family="Arial, sans-serif" font-size="40" font-weight="900" fill="#ffffff" text-anchor="middle">FRS</text>
+    </svg>
+  `)}`,
+  scaledSize: { width: 36, height: 30 },
+  anchor: { x: 18, y: 15 },
+  labelOrigin: { x: 18, y: -10 }
+};
+
+// Ledningsplats (Command Post) - Red square with white 'LP'
+export const LEDNINGSPLATS_ICON = {
+  url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" width="36" height="30">
+      <defs>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="1" dy="1" stdDeviation="1" flood-color="#000" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <rect x="5" y="10" width="110" height="80" rx="4" fill="#dc2626" stroke="#ffffff" stroke-width="4" filter="url(#shadow)" />
+      <text x="60" y="65" font-family="Arial, sans-serif" font-size="40" font-weight="900" fill="#ffffff" text-anchor="middle">LP</text>
+    </svg>
+  `)}`,
+  scaledSize: { width: 36, height: 30 },
+  anchor: { x: 18, y: 15 },
+  labelOrigin: { x: 18, y: -10 }
+};
+
+// SPS (Samlingsplats Skadade) - Yellow Box with text "SPS"
+export const SPS_ICON = {
+  url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100" width="36" height="30">
+      <defs>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="1" dy="1" stdDeviation="1" flood-color="#000" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <rect x="5" y="10" width="110" height="80" rx="4" fill="#fbbf24" stroke="#d97706" stroke-width="4" filter="url(#shadow)" />
+      <text x="60" y="65" font-family="Arial, sans-serif" font-size="40" font-weight="900" fill="#000000" text-anchor="middle">SPS</text>
+    </svg>
+  `)}`,
+  scaledSize: { width: 36, height: 30 },
+  anchor: { x: 18, y: 15 },
+  labelOrigin: { x: 18, y: -10 }
+};
+
+// Sektor (Sector) - Blue/Grey Box with "S"
+export const SEKTOR_ICON = {
+  url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="30" height="30">
+      <defs>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="1" dy="1" stdDeviation="1" flood-color="#000" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <rect x="5" y="10" width="90" height="80" rx="4" fill="#475569" stroke="#94a3b8" stroke-width="4" filter="url(#shadow)" />
+      <text x="50" y="70" font-family="Arial, sans-serif" font-size="60" font-weight="900" fill="#ffffff" text-anchor="middle">S</text>
     </svg>
   `)}`,
   scaledSize: { width: 30, height: 30 },
   anchor: { x: 15, y: 15 },
   labelOrigin: { x: 15, y: -10 }
 };
+
 
 export const DARK_MAP_STYLE = [
   { elementType: "geometry", stylers: [{ color: "#242f3e" }] },

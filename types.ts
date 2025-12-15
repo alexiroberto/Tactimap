@@ -17,7 +17,8 @@ export interface TacticalMarker {
   lat: number;
   lng: number;
   label?: string; // Address
-  type: 'breakpoint' | 'assembly' | 'decon' | 'command' | 'generic';
+  type: 'breakpoint' | 'assembly' | 'decon' | 'command' | 'generic' | 'ledningsplats' | 'sps' | 'sektor' | 'mob';
+  createdAt?: number; // Timestamp for when marker was placed (used for MOB drift)
 }
 
 export interface MapCenter {
@@ -44,6 +45,6 @@ export enum AppMode {
   PLACE = 'PLACE',
 }
 
-export type ToolType = 'none' | 'zone' | 'breakpoint' | 'assembly' | 'decon' | 'command';
+export type ToolType = 'none' | 'zone' | 'breakpoint' | 'assembly' | 'decon' | 'command' | 'ledningsplats' | 'sps' | 'sektor' | 'mob';
 
 export type MapType = 'roadmap' | 'satellite' | 'hybrid' | 'terrain';

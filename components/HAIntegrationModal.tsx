@@ -20,6 +20,9 @@ const HAIntegrationModal: React.FC<HAIntegrationModalProps> = ({ isOpen, onClose
       case 'assembly': return 'uppsamling';
       case 'decon': return 'sanering';
       case 'command': return 'frs';
+      case 'ledningsplats': return 'ledningsplats';
+      case 'sps': return 'sps';
+      case 'sektor': return 'sektor';
       default: return 'unknown';
     }
   };
@@ -127,6 +130,9 @@ entities:
   - entity: device_tracker.tactical_uppsamling
   - entity: device_tracker.tactical_sanering
   - entity: device_tracker.tactical_frs
+  - entity: device_tracker.tactical_ledningsplats
+  - entity: device_tracker.tactical_sps
+  - entity: device_tracker.tactical_sektor
   ${zones.length > 0 ? '# Du kan också behöva skapa Zoner i HA configuration.yaml om du vill visa cirklarna' : ''}`)} className="bg-slate-700 hover:bg-slate-600 text-xs text-white px-2 py-1 rounded shadow">
                     Kopiera
                   </button>
@@ -140,7 +146,10 @@ entities:
   - entity: device_tracker.tactical_brytpunkt
   - entity: device_tracker.tactical_uppsamling
   - entity: device_tracker.tactical_sanering
-  - entity: device_tracker.tactical_frs`}
+  - entity: device_tracker.tactical_frs
+  - entity: device_tracker.tactical_ledningsplats
+  - entity: device_tracker.tactical_sps
+  - entity: device_tracker.tactical_sektor`}
                 </pre>
               </div>
             </div>

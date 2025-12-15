@@ -150,6 +150,11 @@ const TopBar: React.FC<TopBarProps> = ({
 
         // Feedback
         console.log(`Plats uppdaterad: ${result.formatted_address}`);
+        
+        // Blur inputs to hide keyboard on mobile
+        inputRef.current?.blur();
+        numberInputRef.current?.blur();
+
       } else {
         // Försök en gång till utan husnummer om det misslyckades, ibland finns inte numret exakt
         if (houseNumber.trim()) {
@@ -168,6 +173,7 @@ const TopBar: React.FC<TopBarProps> = ({
                      }
 
                      alert(`Hittade inte exakt nummer ${houseNumber}, visar gatan istället.`);
+                     inputRef.current?.blur();
                 } else {
                     alert("Kunde inte hitta platsen. Kontrollera stavning.");
                 }
@@ -188,20 +194,21 @@ const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <div className="absolute top-6 left-6 right-6 z-20 flex flex-col md:flex-row justify-between items-start gap-4 pointer-events-none">
+    <div className="absolute top-4 left-4 right-4 z-20 flex flex-col items-stretch pointer-events-none gap-2 md:flex-row md:items-start md:justify-end">
       
-      {/* Floating Capsule Search Bar Container */}
+      {/* Search Bar Container */}
       <div className={`
-        pointer-events-auto ml-[340px] flex flex-col gap-2 transition-all duration-300 relative shrink-0
-        ${isFocused ? 'w-full max-w-lg scale-[1.01]' : 'w-full max-w-md'}
+        pointer-events-auto flex flex-col gap-2 transition-all duration-300 relative shrink-0 order-1
+        md:w-[400px] md:ml-auto
+        ${isFocused ? 'w-full scale-[1.01]' : 'w-full'}
       `}> 
         
         {/* The Search Capsule */}
-        <div className="relative group w-full shadow-2xl rounded-full z-30">
+        <div className="relative group w-full shadow-2xl rounded-2xl md:rounded-full z-30">
            {/* Background Blur Container */}
-          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl rounded-full border border-white/10"></div>
+          <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-xl rounded-2xl md:rounded-full border border-white/10"></div>
           
-          <div className="relative flex items-center h-12">
+          <div className="relative flex items-center h-14 md:h-12">
             {/* Icon */}
             <div className="pl-4 flex items-center pointer-events-none text-slate-400">
               <svg className={`h-5 w-5 transition-colors ${isFocused ? 'text-blue-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -210,7 +217,7 @@ const TopBar: React.FC<TopBarProps> = ({
               </svg>
             </div>
             
-            {/* Input 1: Street (input_select.vald_gatuadress) */}
+            {/* Input 1: Street */}
             <input
               ref={inputRef}
               type="text"
@@ -220,46 +227,46 @@ const TopBar: React.FC<TopBarProps> = ({
               onChange={(e) => handleStreetChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Gata / Plats..."
-              className="flex-1 h-full bg-transparent text-slate-200 placeholder-slate-500 border-none focus:ring-0 text-sm font-medium pl-3 pr-2 rounded-l-full font-mono outline-none min-w-0"
+              className="flex-1 h-full bg-transparent text-slate-200 placeholder-slate-500 border-none focus:ring-0 text-base md:text-sm font-medium pl-3 pr-2 rounded-l-full font-mono outline-none min-w-0"
             />
             
             {/* Divider */}
             <div className="h-6 w-px bg-white/10 mx-1"></div>
 
-            {/* Input 2: Number (input_text.husnummer) */}
+            {/* Input 2: Number */}
             <input
               ref={numberInputRef}
-              type="text"
+              type="number"
               value={houseNumber}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               onChange={(e) => setHouseNumber(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Nr"
-              className="w-14 h-full bg-transparent text-center text-slate-200 placeholder-slate-600 border-none focus:ring-0 text-sm font-bold font-mono outline-none"
+              className="w-14 h-full bg-transparent text-center text-slate-200 placeholder-slate-600 border-none focus:ring-0 text-base md:text-sm font-bold font-mono outline-none"
             />
 
             {/* Divider */}
             <div className="h-6 w-px bg-white/10 mx-1"></div>
 
-            {/* Button: Fetch (input_button.hamta_position) */}
+            {/* Button: Fetch */}
             <button 
               onClick={() => handleFetchPosition('search')}
-              className="ml-1 p-2 bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white rounded-full transition-all duration-300 flex items-center justify-center shadow-lg"
+              className="ml-1 p-2 bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white rounded-full transition-all duration-300 flex items-center justify-center shadow-lg w-10 h-10"
               title="Sök plats"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </button>
 
-            {/* Button: Place Zone (New) */}
+            {/* Button: Place Zone */}
             <button 
               onClick={() => handleFetchPosition('place')}
-              className="mr-1.5 ml-1 p-2 bg-slate-800 hover:bg-red-600 text-red-400 hover:text-white rounded-full transition-all duration-300 flex items-center justify-center shadow-lg"
+              className="mr-1.5 ml-1 p-2 bg-slate-800 hover:bg-red-600 text-red-400 hover:text-white rounded-full transition-all duration-300 flex items-center justify-center shadow-lg w-10 h-10"
               title="Sätt zon på adress"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
@@ -268,27 +275,27 @@ const TopBar: React.FC<TopBarProps> = ({
 
         {/* Custom Suggestions Dropdown */}
         {showSuggestions && predictions.length > 0 && (
-          <div className="absolute top-full mt-2 left-0 right-0 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-20 animate-fade-in-down">
+          <div className="absolute top-full mt-2 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in-down max-h-[40vh] overflow-y-auto">
             <ul className="py-1">
               {predictions.map((prediction) => (
                 <li 
                   key={prediction.place_id}
                   onClick={() => handleSelectPrediction(prediction)}
-                  className="px-4 py-3 cursor-pointer transition-colors flex items-center justify-between border-b border-white/5 last:border-0 hover:bg-white/5"
+                  className="px-4 py-4 cursor-pointer transition-colors flex items-center justify-between border-b border-white/5 last:border-0 hover:bg-white/5 active:bg-blue-600/20"
                 >
                   <div className="flex items-center gap-3 overflow-hidden">
                     <div className="p-2 rounded-full flex-shrink-0 bg-slate-800 text-slate-400">
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                        </svg>
                     </div>
                     
                     <div className="flex flex-col min-w-0">
-                      <span className="text-sm truncate font-medium text-slate-200">
+                      <span className="text-base font-medium text-slate-200 truncate">
                         {prediction.structured_formatting.main_text}
                       </span>
-                      <span className="text-[10px] text-slate-500 truncate">
+                      <span className="text-xs text-slate-500 truncate">
                         {prediction.structured_formatting.secondary_text}
                       </span>
                     </div>
@@ -298,38 +305,38 @@ const TopBar: React.FC<TopBarProps> = ({
             </ul>
           </div>
         )}
-
       </div>
 
-      {/* CENTER: Address List Panel */}
-      <AddressList 
-        zones={zones}
-        markers={markers}
-        onDeleteZone={onDeleteZone}
-        onDeleteMarker={onDeleteMarker}
-      />
+      {/* Control Pills Row - Wraps on mobile */}
+      <div className="pointer-events-auto flex items-center gap-2 shrink-0 order-2 flex-wrap justify-end">
+        
+        {/* Address List Toggle (Integrated into TopBar) */}
+        <AddressList 
+            zones={zones}
+            markers={markers}
+            onDeleteZone={onDeleteZone}
+            onDeleteMarker={onDeleteMarker}
+        />
 
-      {/* Floating Control Pills */}
-      <div className="pointer-events-auto flex items-center gap-3 shrink-0">
         {/* Map Type Pill */}
-        <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl p-1 pr-4 relative group hover:border-white/20 transition-all">
+        <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl p-1 pr-3 relative group hover:border-white/20 transition-all">
           <div className="flex items-center">
-            <div className="p-2 bg-slate-800 rounded-full text-slate-400 mr-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="p-2 bg-slate-800 rounded-full text-slate-400 mr-1 md:mr-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
             </div>
             <select
               value={mapType}
               onChange={(e) => setMapType(e.target.value as MapType)}
-              className="bg-transparent text-slate-300 text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer appearance-none pr-6"
+              className="bg-transparent text-slate-300 text-xs font-bold uppercase tracking-wider focus:outline-none cursor-pointer appearance-none pr-6 max-w-[80px] md:max-w-none truncate"
             >
               <option value="roadmap">Karta</option>
               <option value="satellite">Satellit</option>
               <option value="hybrid">Hybrid</option>
               <option value="terrain">Terräng</option>
             </select>
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-500">
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-slate-500">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
             </div>
           </div>
@@ -346,13 +353,13 @@ const TopBar: React.FC<TopBarProps> = ({
           `}
         >
           {showZones ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
           ) : (
-            <div className="w-4 h-4 rounded-full border-2 border-slate-500"></div>
+            <div className="w-5 h-5 rounded-full border-2 border-slate-500"></div>
           )}
-          ZONER
+          <span className="hidden md:inline">ZONER</span>
         </button>
       </div>
     </div>
